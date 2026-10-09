@@ -1,0 +1,24 @@
+name: CI
+on: [push, pull_request]
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env: { POSTGRES_DB: mcp_test, POSTGRES_USER: owner, POSTGRES_PASSWORD: owner }
+        ports: ["5432:5432"]
+        options: --health-cmd "pg_isready -U owner" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      TORONTO_TEST_ADMIN_DSN: host=localhost port=5432 dbname=mcp_test user=owner password=owner
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with: {python-version: "3.14", cache: pip}
+      - run: pip install -r requirements-dev.txt
+      - run: ruff check . && ruff format --check .
+      - name: Guard unit tests, then the server over MCP against PostgreSQL as the read-only role
+        run: pytest -v

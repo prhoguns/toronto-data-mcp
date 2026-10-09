@@ -1,0 +1,5 @@
+mcp==2.3.0
+sqlglot==30.21.0
+psycopg[binary]==3.3.6
+pytest==9.1.1
+ruff==0.16.10
